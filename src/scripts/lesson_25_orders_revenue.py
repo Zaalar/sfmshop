@@ -47,6 +47,34 @@ def main():
     )
     conn.commit()
 
+    cursor.execute("""
+        SELECT orders.order_id,
+        SUM(products.price * orders.quantity) AS total
+        FROM orders 
+        JOIN products
+        ON orders.product_id = products.product_id
+        GROUP BY orders.order_id
+    """)
+
+    total = cursor.fetchall()
+
+    for i in total:
+        print(f"Сумма заказа {i[0]}: {i[1]}")
+
+    cursor.execute("""
+        SELECT
+        SUM(products.price * orders.quantity) AS total
+        FROM orders 
+        JOIN products
+        ON orders.product_id = products.product_id
+    """)
+    
+    revenue = cursor.fetchall()
+    print(f"Общая выручка: {revenue[0][0]}")
+
+
+    conn.close()
+
 
 if __name__ == "__main__":
     main()
