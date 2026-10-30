@@ -66,22 +66,53 @@ def create_order(conn, user_id, total):
     finally:
         cursor.close()
 
+def get_user_orders(conn, user_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        SELECT order_id, user_id, total
+        FROM orders
+        WHERE user_id = %s;
+       """, (user_id,))
+        return cursor.fetchall()
+    except psycopg2.Error as e:
+        print(f"Ошибка БД {e}")
+        return None
+    finally:
+        cursor.close()
+
 def main():
     conn = connect_to_db()
+    try:
+        user_id = create_user(conn, "Иван", "ivan@test.ru")
+        if user_id is None:
+            print("Не удалось создать пользователя")
+            return
 
-    user_id = create_user(conn, "Иван", "ivan@test.ru")
-    print(f"Пользователь создан: Иван, ivan@test.ru")
+        print(f"Пользователь создан: Иван, ivan@test.ru")
 
-    user = get_user_by_id(conn, user_id)
-    print(f"Пользователь найден: {user}")
+        user = get_user_by_id(conn, user_id)
+        if user is None:
+            print("Пользователь не найден")
+            return
 
-    order_id = create_order(conn, user_id, 5000.00)
-    print(f"Заказ создан: user_id={user_id}, total=5000.0")
+        print(f"Пользователь найден: {user}")
 
-    orders = get_user_orders(conn, user_id)
-    print(f"Заказы пользователя: {orders}")
+        order_id = create_order(conn, user_id, 5000.00)
+        if order_id is None:
+            print("Не удалось создать заказ")
+            return
 
-    conn.close()
+        print(f"Заказ создан: user_id={user_id}, total=5000.0")
+
+        orders = get_user_orders(conn, user_id)
+        if orders is None:
+            print("Не удалось получить заказы пользователя")
+            return
+
+        print(f"Заказы пользователя: {orders}")
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
