@@ -65,8 +65,8 @@ def get_top_products(conn, limit=5):
             SELECT products.name,
             SUM(order_items.quantity) AS orders_quantity
             FROM order_items
-            JOIN products ON order_items.item_id = products.id
-            GROUP BY products.name, order_items.product_id
+            JOIN products ON order_items.product_id = products.id
+            GROUP BY products.id, products.name
             ORDER BY orders_quantity DESC
             LIMIT %s
             """, (limit,)
