@@ -21,9 +21,9 @@ def get_user_order_history(conn, user_id):
     try:
         cursor.execute(
             """
-                SELECT orders.order_id, products.name, order_items.quantity, orders.created_at
+                SELECT orders.id, products.name, order_items.quantity, orders.created_at
                 FROM orders
-                JOIN order_items ON order_items.order_id = orders.order_id
+                JOIN order_items ON order_items.order_id = orders.id
                 JOIN products ON order_items.product_id = products.id
                 WHERE orders.user_id = %s
                 ORDER BY orders.created_at DESC""",
@@ -78,12 +78,30 @@ def get_top_products(conn, limit=5):
     finally:
         cursor.close()
 
+
+def get_all_products(conn):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+                SELECT products.id, products.name, products.price
+                FROM products 
+                """
+        )
+        return cursor.fetchall()
+    except psycopg2.Error as e:
+        print(f"Ошибка БД: {e}")
+        return None
+    finally:
+        cursor.close()
+
 def main():
     conn = connect_to_db()
     try:
         print(get_user_order_history(conn, user_id=1))
         print(get_order_statistics(conn))
         print(get_top_products(conn))
+        print(get_all_products(conn))
     finally:
         conn.close()
 

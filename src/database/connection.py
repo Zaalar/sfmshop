@@ -53,7 +53,7 @@ def create_order(conn, user_id, total):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            INSERT INTO orders(user_id, total) VALUES (%s, %s) RETURNING order_id;
+            INSERT INTO orders(user_id, total) VALUES (%s, %s) RETURNING id;
         """,
         (user_id, total))
         order_id = cursor.fetchone()[0]
@@ -70,7 +70,7 @@ def get_user_orders(conn, user_id):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-        SELECT order_id, user_id, total
+        SELECT id, user_id, total
         FROM orders
         WHERE user_id = %s;
        """, (user_id,))
@@ -81,15 +81,44 @@ def get_user_orders(conn, user_id):
     finally:
         cursor.close()
 
+def delete_order(conn, order_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM order_items
+            WHERE order_id = %s
+        """,
+        (order_id,))
+        cursor.execute("""
+            DELETE FROM orders
+            WHERE id = %s
+        """,
+        (order_id,))
+        conn.commit()
+        deleted_row = cursor.rowcount 
+        return deleted_row
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"Ошибка БД {e}")
+        return None
+    finally:
+        cursor.close()
+
 def main():
     conn = connect_to_db()
     try:
-        user_id = create_user(conn, "Иван", "ivan@test.ru")
+        user_id = create_user(conn, "Тестеинг Тестоав", "test4@example.com")
         if user_id is None:
-            print("Не удалось создать пользователя")
+            print("Пользователь не создан")
             return
 
-        print(f"Пользователь создан: Иван, ivan@test.ru")
+        order_id = create_order(conn, user_id, 999.99)
+        if order_id is None:
+            print("Заказ не создан")
+            return
+
+        deleted = delete_order(conn, order_id) 
+        print(f"Удалено строк: {deleted}")
 
         user = get_user_by_id(conn, user_id)
         if user is None:
@@ -98,12 +127,6 @@ def main():
 
         print(f"Пользователь найден: {user}")
 
-        order_id = create_order(conn, user_id, 5000.00)
-        if order_id is None:
-            print("Не удалось создать заказ")
-            return
-
-        print(f"Заказ создан: user_id={user_id}, total=5000.0")
 
         orders = get_user_orders(conn, user_id)
         if orders is None:
