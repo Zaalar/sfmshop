@@ -1,31 +1,9 @@
-from database.connection import connect_to_db, create_user, get_user_by_id
-from database.queries import (
-    get_all_products,
-    get_order_statistics,
-    get_top_products,
-    get_user_order_history,
-)
+products =  [
+    {"id": 1, "name": "Ноутбук", "price": 50000},
+    {"id": 2, "name": "Мышь", "price": 1500},
+    {"id": 3, "name": "Монитор", "price": 7500},
+    {"id": 4, "name": "Клавиатура", "price": 500},
+    {"id": 5, "name": "Провод", "price": 50},
+    {"id": 6, "name": "Модем", "price": 3500},]
 
-
-def main():
-    conn = connect_to_db()
-    try:
-        user_id = create_user(conn, "Тестовый пользователь", "test5@example.com")
-        if user_id is None:
-            print("Пользователь не создан")
-            return
-        print(f"Пользователь создан: id={user_id}")
-
-        print(f"Все товары: {get_all_products(conn)}")
-        print(f"Статистика заказов: {get_order_statistics(conn)}")
-        print(f"Топ товаров: {get_top_products(conn)}")
-
-        user = get_user_by_id(conn, user_id)
-        print(f"Пользователь: {user}")
-        print(f"История заказов: {get_user_order_history(conn, user_id)}")
-    finally:
-        conn.close()
-
-
-if __name__ == "__main__":
-    main()
+print(products[1:4])
