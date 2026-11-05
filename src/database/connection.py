@@ -104,6 +104,57 @@ def delete_order(conn, order_id):
     finally:
         cursor.close()
 
+def count_products(conn):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM products
+            """
+        )
+        return cursor.fetchone()[0]
+    except psycopg2.Error as e:
+        print(f"Ошибка БД: {e}")
+        return None
+    finally:
+        cursor.close()
+
+def get_products_page(conn, limit, offset):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        SELECT id, name, price, quantity
+        FROM products
+        ORDER BY id LIMIT %s OFFSET %s
+       """, (limit, offset))
+        return cursor.fetchall()
+    except psycopg2.Error as e:
+        print(f"Ошибка БД {e}")
+        return None
+    finally:
+        cursor.close()
+
+def get_product_by_id(conn, product_id):
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT id, name, price, quantity
+    FROM products
+    WHERE id = %s
+    """, (product_id,))
+    result = cursor.fetchone()
+    if result is None:
+        cursor.close()
+        return None
+
+    else:
+        cursor.close()
+        return result
+
+
+    
+
+    
 def main():
     conn = connect_to_db()
     try:

@@ -95,6 +95,8 @@ def get_all_products(conn):
     finally:
         cursor.close()
 
+
+
 def main():
     conn = connect_to_db()
     try:
