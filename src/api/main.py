@@ -1,7 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
-from src.database.connection import connect_to_db, count_products, get_products_page, get_product_by_id, update_product
+from src.database.connection import (
+    connect_to_db,
+    count_products, 
+    get_products_page, 
+    get_product_by_id, 
+    update_product,
+    delete_product
+    )
 from src.models.product import Product
 class ProductCreate(BaseModel):
     name: str
@@ -143,7 +150,23 @@ def put_poducts_by_id(id: int, product_data: ProductUpdate):
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
+
+@app.delete("/products/{id}", status_code=200)
+def delete_products_by_id(id: int):
+    try:
+        deleted = delete_product(conn, id)
+        if deleted is None: 
+            raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+        if deleted == 0:
+            raise HTTPException(status_code=404, detail="Товар с таким id не найден")
+        else:
+            return {"message": "Товар удален"}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
 def row_to_product(row):
     product = Product(row[1], row[2], row[3])

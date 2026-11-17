@@ -36,8 +36,8 @@ def get_user_by_id(conn, user_id):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-        SELECT id, name, email
-        FROM users WHERE id = %s;
+            SELECT id, name, email
+            FROM users WHERE id = %s;
        """, (user_id,))
         row = cursor.fetchone()
         if row is None:
@@ -70,9 +70,9 @@ def get_user_orders(conn, user_id):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-        SELECT id, user_id, total
-        FROM orders
-        WHERE user_id = %s;
+            SELECT id, user_id, total
+            FROM orders
+            WHERE user_id = %s;
        """, (user_id,))
         return cursor.fetchall()
     except psycopg2.Error as e:
@@ -109,8 +109,8 @@ def count_products(conn):
     try:
         cursor.execute(
             """
-            SELECT COUNT(*)
-            FROM products
+                SELECT COUNT(*)
+                FROM products
             """
         )
         return cursor.fetchone()[0]
@@ -124,9 +124,9 @@ def get_products_page(conn, limit, offset):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-        SELECT id, name, price, quantity
-        FROM products
-        ORDER BY id LIMIT %s OFFSET %s
+            SELECT id, name, price, quantity
+            FROM products
+            ORDER BY id LIMIT %s OFFSET %s
        """, (limit, offset))
         return cursor.fetchall()
     except psycopg2.Error as e:
@@ -137,36 +137,60 @@ def get_products_page(conn, limit, offset):
 
 def get_product_by_id(conn, product_id):
     cursor = conn.cursor()
-    cursor.execute("""
-    SELECT id, name, price, quantity
-    FROM products
-    WHERE id = %s
-    """, (product_id,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.close()
-        return None
-
-    else:
-        cursor.close()
-        return result
-
-def update_product(conn, product_id, name, price):
     try:
-        cursor = conn.cursor()
         cursor.execute("""
-        UPDATE products
-        SET name = %s, price = %s 
-        WHERE id  = %s;
-        """, (name, price, product_id))
-        conn.commit()
+            SELECT id, name, price, quantity
+            FROM products
+            WHERE id = %s
+        """, (product_id,))
+        result = cursor.fetchone()
+        if result is None:
+            cursor.close()
+            return None
+
+        else:
+            cursor.close()
+            return result
     except psycopg2.Error as e:
         print(f"Ошибка БД {e}")
         return None
     finally:
         cursor.close()
 
+def update_product(conn, product_id, name, price):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            UPDATE products
+            SET name = %s, price = %s
+            WHERE id = %s;
+            """,
+            (name, price, product_id),
+        )
+        conn.commit()
+        return cursor.rowcount
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"Ошибка БД {e}")
+        return None
+    finally:
+        cursor.close()
 
+def delete_product(conn, product_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM products WHERE id = %s;
+            """, (product_id,))
+        conn.commit()
+        return cursor.rowcount
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"Ошибка БД {e}")
+        return None
+    finally:
+        cursor.close()
     
 
     
@@ -182,6 +206,7 @@ def main():
         if order_id is None:
             print("Заказ не создан")
             return
+
 
         deleted = delete_order(conn, order_id) 
         print(f"Удалено строк: {deleted}")
@@ -200,6 +225,7 @@ def main():
             return
 
         print(f"Заказы пользователя: {orders}")
+
     finally:
         conn.close()
 
