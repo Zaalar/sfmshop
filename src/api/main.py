@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
-from src.database.connection import connect_to_db, count_products, get_products_page, get_product_by_id
-
-class Product(BaseModel):
+from src.database.connection import connect_to_db, count_products, get_products_page, get_product_by_id, update_product
+from src.models.product import Product
+class ProductCreate(BaseModel):
     name: str
     price: float
 
@@ -11,6 +11,9 @@ class UserCreate(BaseModel):
     name: str
     email: str
 
+class ProductUpdate(BaseModel):
+    name: str
+    price: float
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,11 +41,16 @@ def get_products(limit: int = 10, offset: int = 0):
     try:
         total = count_products(conn)
         rows = get_products_page(conn, limit, offset)
+        result_products = []
+        for row in rows:
+            product = row_to_product(row)
+            result_products.append(product.__dict__)
+
         return {
             "total": total,
             "limit": limit,
             "offset": offset,
-            "products": rows
+            "products": result_products
             }
     except HTTPException as http_ex:
         raise http_ex
@@ -55,7 +63,7 @@ def get_products_id(id: int):
         product_by_id = get_product_by_id(conn, id)
         if product_by_id is None:
             raise HTTPException(status_code=404, detail="Товар не найден")
-        return product_by_id
+        return row_to_product(product_by_id).__dict__
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
@@ -102,7 +110,7 @@ def post_user(user: UserCreate):
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
 @app.post("/products", status_code=201)
-def post_products(product: Product):
+def post_products(product: ProductCreate):
     try:
         id = 0
         for existing_product in products:
@@ -119,3 +127,27 @@ def post_products(product: Product):
         raise http_ex
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
+
+@app.put("/products/{id}", status_code=200)
+def put_poducts_by_id(id: int, product_data: ProductUpdate):
+    try:
+        product_row = get_product_by_id(conn, id)
+        if product_row is None:
+            raise HTTPException(status_code=404, detail="Товар с таким id не найден")
+
+        update_product(conn, id, product_data.name, product_data.price)
+        updated_row = get_product_by_id(conn, id)
+        return row_to_product(updated_row).__dict__
+
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}") 
+
+def row_to_product(row):
+    product = Product(row[1], row[2], row[3])
+    product.id = row[0]
+    return product
+
+

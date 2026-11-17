@@ -151,6 +151,21 @@ def get_product_by_id(conn, product_id):
         cursor.close()
         return result
 
+def update_product(conn, product_id, name, price):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE products
+        SET name = %s, price = %s 
+        WHERE id  = %s;
+        """, (name, price, product_id))
+        conn.commit()
+    except psycopg2.Error as e:
+        print(f"Ошибка БД {e}")
+        return None
+    finally:
+        cursor.close()
+
 
     
 
