@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 from src.database.connection import (
     connect_to_db,
@@ -7,9 +7,12 @@ from src.database.connection import (
     get_products_page, 
     get_product_by_id, 
     update_product,
-    delete_product
+    delete_product,
+    get_user_by_id,
+    create_order
     )
 from src.models.product import Product
+from src.models.order import Order
 class ProductCreate(BaseModel):
     name: str
     price: float
@@ -21,6 +24,11 @@ class UserCreate(BaseModel):
 class ProductUpdate(BaseModel):
     name: str
     price: float
+
+class OrderCreate(BaseModel):
+    user_id: int
+    product_id: int
+    quantity: int = Field(gt=0)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -86,7 +94,7 @@ def get_user():
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
 @app.get("/users/{id}", status_code=200)
-def get_user_by_id(id: int):
+def get_user(id: int):
     try:
         for user in users:
             if user["id"] == id:
@@ -163,6 +171,26 @@ def delete_products_by_id(id: int):
             raise HTTPException(status_code=404, detail="Товар с таким id не найден")
         else:
             return {"message": "Товар удален"}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
+@app.post("/orders", status_code=201)
+def post_oders(order: OrderCreate):
+    try:
+        user = get_user_by_id(conn, order.user_id)
+        product = get_product_by_id(conn, order.product_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        if product is None:
+            raise HTTPException(status_code=404, detail="Товар не найден")
+        product_obj = Product(product[1], product[2], order.quantity)
+        total = Order([product_obj]).calculate_total()
+        new_order_id = create_order(conn, order.user_id, total)
+        if new_order_id is None:
+            raise HTTPException(status_code=500, detail="Не удалось создать заказ")
+        return {"order_id": new_order_id, "total": total}
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
