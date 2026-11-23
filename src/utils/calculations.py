@@ -1,11 +1,7 @@
-# Оптимизировать функцию обработки большого списка данных в src/utils/calculations.py,
-# измерить время выполнения до и после через простой замер времени (time.time()). 
-# Функции — в src/utils/calculations.py, 
-# сборка списка заказов и запуск замера — в scripts/lesson_30_benchmark.py. 
-# Работать нужно с настоящими Order, Product и User из src/models/.
 import time
 import functools
 from typing import Iterator, Optional
+from src.models.product import Product
 
 def measure_time(func):
     """Декоратор: замеряет и выводит время выполнения функции"""
@@ -27,13 +23,13 @@ def order_products_gen(orders:list) -> Iterator[float]:
 def calculate_total_orders_optimized(orders: list) -> float:
     return sum(order_products_gen(orders))
 
-# @measure_time
-# def calculate_total_orders(orders):
-#     """Рассчитать общую сумму всех заказов"""
-#     total = 0
-#     for order in orders:
-#         for product in order.products:
-#             total += product.get_total_price()
-#     return total
 
-# Измерение производительности
+def find_product_in_list(products, product_id):
+    for product in products:
+        if product.id == product_id:
+            return product
+    return None
+
+
+def find_product_in_dict(products_dict, product_id):
+    return products_dict.get(product_id)

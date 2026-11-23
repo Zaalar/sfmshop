@@ -17,6 +17,8 @@ products = [
 ]
 orders = [Order(products)]
 
+
+
 @measure_time
 def calculate_total_orders_optimized(orders: list) -> Iterator[float]:
     return sum(order_products_gen(orders))
