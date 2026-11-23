@@ -20,18 +20,20 @@ def measure_time(func):
 
 def order_products_gen(orders:list) -> Iterator[float]:
     for order in orders:
-        order
-
-def calculate_total_orders(orders):
-    """Рассчитать общую сумму всех заказов"""
-    total = 0
-    for order in orders:
         for product in order.products:
-            total += product.get_total_price()
-    return total
+            yield product.get_total_price()
+
+@measure_time
+def calculate_total_orders_optimized(orders: list) -> float:
+    return sum(order_products_gen(orders))
+
+# @measure_time
+# def calculate_total_orders(orders):
+#     """Рассчитать общую сумму всех заказов"""
+#     total = 0
+#     for order in orders:
+#         for product in order.products:
+#             total += product.get_total_price()
+#     return total
 
 # Измерение производительности
-start_time = time.time()
-result = calculate_total_orders(orders)
-end_time = time.time()
-print(f"Время выполнения: {end_time - start_time:.4f} секунд")
