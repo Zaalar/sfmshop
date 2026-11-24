@@ -4,7 +4,6 @@ from typing import Iterator, Optional
 from src.models.product import Product
 
 def measure_time(func):
-    """Декоратор: замеряет и выводит время выполнения функции"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
@@ -24,12 +23,12 @@ def calculate_total_orders_optimized(orders: list) -> float:
     return sum(order_products_gen(orders))
 
 
-def find_product_in_list(products, product_id):
+def find_product_in_list(products: list, product_id: int) -> None:
     for product in products:
         if product.id == product_id:
             return product
     return None
 
 
-def find_product_in_dict(products_dict, product_id):
+def find_product_in_dict(products_dict: dict, product_id: int):
     return products_dict.get(product_id)
