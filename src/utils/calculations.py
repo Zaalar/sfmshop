@@ -6,9 +6,9 @@ from src.models.product import Product
 def measure_time(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        start = time.time()
+        start = time.perf_counter()
         result = func(*args, **kwargs)
-        elapsed = time.time() - start
+        elapsed = time.perf_counter()- start
         print(f"{func.__name__} выполнена за {elapsed:.4f} сек")
         return result
     return wrapper
@@ -23,12 +23,12 @@ def calculate_total_orders_optimized(orders: list) -> float:
     return sum(order_products_gen(orders))
 
 
-def find_product_in_list(products: list, product_id: int) -> None:
+def find_product_in_list(products: list, product_id: int)->Product | None:
     for product in products:
         if product.id == product_id:
             return product
     return None
 
 
-def find_product_in_dict(products_dict: dict, product_id: int):
+def find_product_in_dict(products_dict: dict, product_id: int)->Product | None:
     return products_dict.get(product_id)
